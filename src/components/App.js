@@ -1,25 +1,20 @@
 import '../css/App.css';
 import React from 'react';
-import axios from 'axios';
 import Blog from './blogs/Blog';
+import Session from '../utils/Session';
 import EditForm from './blogs/EditForm';
 import ArticleForm from './blogs/ArticleForm';
+import * as HttpStatus from 'http-status-codes';
+import axiosInstance, { getTokenHeader } from '../config';
 
 class App extends React.Component {
   constructor() {
     super();
 
-    this.instance = axios.create({
-      baseURL: 'http://localhost:8000/api/',
-      timeout: 1000,
-      headers: {
-        'Access-Control-Allow-Origin': 'http://localhost:8000/'
-      }
-    });
-
     this.state = {
       blog: [],
-      editIndex: ''
+      editIndex: '',
+      isAuthenticated: false
     };
 
     this.addArticle = this.addArticle.bind(this);
@@ -30,25 +25,35 @@ class App extends React.Component {
   }
 
   componentDidMount() {
-    this.instance.get('posts')
-      .then(response => {
+    axiosInstance.post('login', {
+      email: 'sgr.raee@gmail.com',
+      password: 'secret'
+    }).then(response => {
+      if (response.status === HttpStatus.CREATED) {
+        Session.push('accessToken', response.data['accessToken']);
+        Session.push('refreshToken', response.data['refreshToken']);
+      }
+    }).catch(error => error);
+
+    axiosInstance.get('posts', getTokenHeader('accessToken')).then(response => {
+      if (response.status === HttpStatus.OK) {
         this.setState({
+          isAuthenticated: true,
           blog: response.data.data
         });
-      }).catch(error => {
-      console.log(error);
-    });
+      }
+    }).catch(error => error);
   }
 
   addArticle(article) {
     let blog = this.state.blog.slice();
-    this.instance.post('posts', {
+    axiosInstance.post('posts', {
       title: article.title,
       body: article.body,
       tags: [],
       userId: 1
-    }).then(response => {
-      if (response.status === 201) {
+    }, getTokenHeader('accessToken')).then(response => {
+      if (response.status === HttpStatus.CREATED) {
         blog.push(response.data.data);
         this.setState({ blog });
       }
@@ -57,12 +62,12 @@ class App extends React.Component {
 
   editArticle(article) {
     let blog = this.state.blog.slice();
-    this.instance.put(`posts/${article.id}`, {
+    axiosInstance.put(`posts/${article.id}`, {
       title: article.title,
       body: article.body,
       tags: []
-    }).then(response => {
-      if (response.status === 200) {
+    }, getTokenHeader('accessToken')).then(response => {
+      if (response.status === HttpStatus.OK) {
         blog[this.state.editIndex] = article;
         this.setState({
           blog: blog,
@@ -74,9 +79,9 @@ class App extends React.Component {
 
   deleteArticle(index) {
     let blog = this.state.blog.slice();
-    this.instance.delete(`posts/${blog[index].id}`)
+    axiosInstance.delete(`posts/${blog[index].id}`, getTokenHeader('accessToken'))
       .then(response => {
-        if (response.status === 204) {
+        if (response.status === HttpStatus.NO_CONTENT) {
           blog = blog.filter((value, i) => i !== index);
           this.setState({ blog });
         }
@@ -96,18 +101,35 @@ class App extends React.Component {
   }
 
   render() {
+    let blog = this.state.isAuthenticated ? (
+      (
+        <section>
+          <ArticleForm onSubmit={this.addArticle}/>
+          <EditForm value={this.state.blog[this.state.editIndex]}
+                    onClose={this.closeEditForm}
+                    onSubmit={this.editArticle}/>
+          <Blog value={this.state.blog}
+                onDelete={this.deleteArticle}
+                onEdit={this.setEditIndex}/>
+        </section>
+      )
+    ) : (
+      <section className="hero">
+        <div className="hero-body">
+          <div className="container">
+            <h1 className="title text-center">
+              Your session was expired.
+            </h1>
+          </div>
+        </div>
+      </section>
+    );
     return (
       <div className="App">
         <header className="App-header">
           <h1 className="App-title text-center">cham11ng's Blog</h1>
         </header>
-        <ArticleForm onSubmit={this.addArticle}/>
-        <EditForm value={this.state.blog[this.state.editIndex]}
-                  onClose={this.closeEditForm}
-                  onSubmit={this.editArticle}/>
-        <Blog value={this.state.blog}
-              onDelete={this.deleteArticle}
-              onEdit={this.setEditIndex}/>
+        {blog}
       </div>
     );
   }
