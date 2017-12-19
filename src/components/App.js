@@ -1,5 +1,6 @@
 import '../css/App.css';
 import React from 'react';
+import axios from 'axios';
 import Blog from './blogs/Blog';
 import EditForm from './blogs/EditForm';
 import ArticleForm from './blogs/ArticleForm';
@@ -8,13 +9,16 @@ class App extends React.Component {
   constructor() {
     super();
 
+    this.instance = axios.create({
+      baseURL: 'http://localhost:8000/api/',
+      timeout: 1000,
+      headers: {
+        'Access-Control-Allow-Origin': 'http://localhost:8000/'
+      }
+    });
+
     this.state = {
-      blog: [
-        {
-          title: 'You can add your article',
-          body: 'Press + to add new article.'
-        }
-      ],
+      blog: [],
       editIndex: ''
     };
 
@@ -25,25 +29,58 @@ class App extends React.Component {
     this.closeEditForm = this.closeEditForm.bind(this);
   }
 
+  componentDidMount() {
+    this.instance.get('posts')
+      .then(response => {
+        this.setState({
+          blog: response.data.data
+        });
+      }).catch(error => {
+      console.log(error);
+    });
+  }
+
   addArticle(article) {
     let blog = this.state.blog.slice();
-    blog.push(article);
-    this.setState({ blog });
+    this.instance.post('posts', {
+      title: article.title,
+      body: article.body,
+      tags: [],
+      userId: 1
+    }).then(response => {
+      if (response.status === 201) {
+        blog.push(response.data.data);
+        this.setState({ blog });
+      }
+    }).catch(error => console.log(error));
   }
 
   editArticle(article) {
     let blog = this.state.blog.slice();
-    blog[this.state.editIndex] = article;
-    this.setState({
-      blog: blog,
-      editIndex: ''
-    });
+    this.instance.put(`posts/${article.id}`, {
+      title: article.title,
+      body: article.body,
+      tags: []
+    }).then(response => {
+      if (response.status === 200) {
+        blog[this.state.editIndex] = article;
+        this.setState({
+          blog: blog,
+          editIndex: ''
+        });
+      }
+    }).catch(error => console.log(error));
   }
 
   deleteArticle(index) {
     let blog = this.state.blog.slice();
-    blog = blog.filter((value, i) => i !== index);
-    this.setState({ blog });
+    this.instance.delete(`posts/${blog[index].id}`)
+      .then(response => {
+        if (response.status === 204) {
+          blog = blog.filter((value, i) => i !== index);
+          this.setState({ blog });
+        }
+      }).catch(error => console.log(error));
   }
 
   setEditIndex(i) {

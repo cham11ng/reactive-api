@@ -8,8 +8,10 @@ class EditForm extends React.Component {
     this.state = {
       isEditing: false,
       article: {
+        id: '',
         title: '',
-        body: ''
+        body: '',
+        tags: []
       }
     };
 
