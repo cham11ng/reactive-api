@@ -1,20 +1,17 @@
 import React from 'react';
-import '../../css/Article.css';
 import Button from '../elements/Button';
 
-class Article extends React.Component {
-  render() {
-    return (
-      <article className="Article content">
-        <h2>{this.props.value.title}</h2>
-        <p>{this.props.value.body}</p>
-        <div className="text-right">
-          <Button className="button" value="Edit" onClick={this.props.onEdit}/>
-          <Button className="button" value="Delete" onClick={this.props.onDelete}/>
+export default function (props) {
+  return (
+    <article className="box">
+      <div className="content">
+        <h2>{props.value.title}</h2>
+        <p className="has-text-justified">{props.value.body}</p>
+        <div className="has-text-right">
+          <Button className="button fa fa-edit" value=" Edit" onClick={props.onEdit}/>
+          <Button className="button fa fa-trash" value=" Delete" onClick={props.onDelete}/>
         </div>
-      </article>
-    );
-  }
+      </div>
+    </article>
+  );
 }
-
-export default Article;

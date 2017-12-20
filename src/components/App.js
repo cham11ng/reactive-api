@@ -1,11 +1,12 @@
-import '../css/App.css';
 import React from 'react';
+
 import Blog from './blogs/Blog';
-import Session from '../utils/Session';
-import EditForm from './blogs/EditForm';
+import Header from './headers/Header';
+import Button from './elements/Button';
+import Message from './elements/Message';
 import ArticleForm from './blogs/ArticleForm';
-import * as HttpStatus from 'http-status-codes';
-import axiosInstance, { getTokenHeader } from '../services/axiosService';
+import * as authService from '../services/authService';
+import * as articleService from '../services/articleService';
 
 class App extends React.Component {
   constructor() {
@@ -13,133 +14,157 @@ class App extends React.Component {
 
     this.state = {
       blog: [],
-      editIndex: '',
+      form: {
+        title: '',
+        body: ''
+      },
+      isAddModal: false,
+      editIndex: null,
+      isEditing: false,
       isAuthenticated: false
     };
 
     this.addArticle = this.addArticle.bind(this);
     this.editArticle = this.editArticle.bind(this);
     this.deleteArticle = this.deleteArticle.bind(this);
-    this.setEditIndex = this.setEditIndex.bind(this);
-    this.closeEditForm = this.closeEditForm.bind(this);
+    this.fetchAllArticle = this.fetchAllArticle.bind(this);
 
-    this.axiosInstance = Object.assign({}, axiosInstance);
+    this.handleChange = this.handleChange.bind(this);
+    this.toggleAddForm = this.toggleAddForm.bind(this);
+    this.toggleEditForm = this.toggleEditForm.bind(this);
   }
 
   componentDidMount() {
-    this.axiosInstance.post('login', {
-      email: 'sgr.raee@gmail.com',
-      password: 'secret'
-    }).then(response => {
-      if (response.status === HttpStatus.CREATED) {
-        Session.push('accessToken', response.data['accessToken']);
-        Session.push('refreshToken', response.data['refreshToken']);
-      }
-    }).catch(error => error);
-
-    this.axiosInstance.get('posts', {
-      headers: getTokenHeader('accessToken')
-    }).then(response => {
-      if (response.status === HttpStatus.OK) {
-        this.setState({
-          isAuthenticated: true,
-          blog: response.data.data
-        });
-      }
+    authService.login().then(response => {
+      this.fetchAllArticle();
+      this.setState({
+        isAuthenticated: true
+      });
     }).catch(error => error);
   }
 
-  addArticle(article) {
-    let blog = this.state.blog.slice();
-    this.axiosInstance.post('posts', {
-      title: article.title,
-      body: article.body,
-      tags: [],
-      userId: 1
-    }, {
-      headers: getTokenHeader('accessToken')
-    }).then(response => {
-      if (response.status === HttpStatus.CREATED) {
-        blog.push(response.data.data);
-        this.setState({ blog });
-      }
-    }).catch(error => console.log(error));
+  fetchAllArticle() {
+    articleService.fetchAll().then(response => {
+      this.setState({ blog: response.data });
+    }).then(error => error);
   }
 
-  editArticle(article) {
-    let blog = this.state.blog.slice();
-    this.axiosInstance.put(`posts/${article.id}`, {
-      title: article.title,
-      body: article.body,
-      tags: []
-    }, {
-      headers: getTokenHeader('accessToken')
-    }).then(response => {
-      if (response.status === HttpStatus.OK) {
-        blog[this.state.editIndex] = article;
+  addArticle(event) {
+    event.preventDefault();
+    articleService.add(this.state.form).then(response => {
+      if (response) {
+        let blog = this.state.blog.slice();
+        blog.push(response.data);
         this.setState({
           blog: blog,
-          editIndex: ''
+          isAddModal: !this.state.isAddModal,
+          isEditing: false,
+          form: {
+            title: '',
+            body: ''
+          }
+        });
+      }
+    }).then(error => error);
+  }
+
+  editArticle(event) {
+    event.preventDefault();
+    articleService.edit(this.state.form).then(response => {
+      if (response) {
+        let blog = this.state.blog.slice();
+        blog[this.state.editIndex] = response.data;
+        this.setState({
+          blog: blog,
+          editIndex: null,
+          isEditing: false,
+          form: {
+            title: '',
+            body: ''
+          }
         });
       }
     }).catch(error => error);
   }
 
   deleteArticle(index) {
-    let blog = this.state.blog.slice();
-    this.axiosInstance.delete(`posts/${blog[index].id}`, {
-      headers: getTokenHeader('accessToken')
-    })
-      .then(response => {
-        if (response.status === HttpStatus.NO_CONTENT) {
-          blog = blog.filter((value, i) => i !== index);
-          this.setState({ blog });
-        }
-      }).catch(error => console.log(error));
+    articleService.remove(this.state.blog[index].id).then(response => {
+      if (response) {
+        let blog = this.state.blog.slice();
+        blog.splice(index, 1);
+        this.setState({ blog });
+      }
+    }).catch(error => error);
   }
 
-  setEditIndex(i) {
-    this.setState({
-      editIndex: i
+  toggleAddForm() {
+    return this.setState({
+      isAddModal: !this.state.isAddModal,
+      isEditing: false,
+      form: {
+        title: '',
+        body: ''
+      }
     });
   }
 
-  closeEditForm() {
-    this.setState({
-      editIndex: ''
+  toggleEditForm(index = null) {
+    return this.setState({
+      isEditing: false,
+      editIndex: index,
+      form: (index !== null) ? this.state.blog[index] : {
+        title: '',
+        body: '',
+      }
+    });
+  }
+
+  handleChange(event) {
+    let article = Object.assign({}, this.state.form);
+    article[event.target.name] = event.target.value;
+
+    return this.setState({
+      form: article,
+      isEditing: true
     });
   }
 
   render() {
-    let blog = this.state.isAuthenticated ? (
-      (
-        <section>
-          <ArticleForm onSubmit={this.addArticle}/>
-          <EditForm value={this.state.blog[this.state.editIndex]}
-                    onClose={this.closeEditForm}
-                    onSubmit={this.editArticle}/>
-          <Blog value={this.state.blog}
-                onDelete={this.deleteArticle}
-                onEdit={this.setEditIndex}/>
-        </section>
-      )
-    ) : (
-      <section className="hero">
-        <div className="hero-body">
-          <div className="container">
-            <h1 className="title text-center">
-              Your session was expired.
-            </h1>
-          </div>
+    let message = <Message value=":( Your session was expired."/>;
+
+    let blog = (
+      <div className="container">
+        <div className="content has-text-right">
+          <Button value=" Add Article"
+                  className="button fa fa-plus"
+                  onClick={this.toggleAddForm}/>
         </div>
-      </section>
+        <ArticleForm title="Add Article"
+                     isActive={this.state.isAddModal}
+                     value={this.state.form}
+                     onClose={this.toggleAddForm}
+                     onChange={this.handleChange}
+                     handleSubmit={this.addArticle}/>
+        <ArticleForm title="Edit Article"
+                     isActive={this.state.editIndex !== null}
+                     value={this.state.isEditing
+                       ? this.state.form
+                       : this.state.blog[this.state.editIndex] || this.state.form}
+                     onClose={this.toggleEditForm}
+                     onChange={this.handleChange}
+                     handleSubmit={this.editArticle}/>
+        <Blog value={this.state.blog}
+              onDelete={this.deleteArticle}
+              onEdit={this.toggleEditForm}/>
+      </div>
     );
+
     return (
       <div className="App">
-        <header className="App-header">
-          <h1 className="App-title text-center">{"cham11ng's Blog"}</h1>
-        </header>
-        {blog}
+        <Header title="cham11ng's Blog" subTitle="Informational, Discussion, Inspirational"/>
+        <section className="section">
+          {this.state.isAuthenticated ? blog : message}
+        </section>
       </div>
     );
   }
