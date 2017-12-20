@@ -5,7 +5,7 @@ import Session from '../utils/Session';
 import EditForm from './blogs/EditForm';
 import ArticleForm from './blogs/ArticleForm';
 import * as HttpStatus from 'http-status-codes';
-import axiosInstance, { getTokenHeader } from '../config';
+import { axiosInstance, getTokenHeader } from '../config';
 
 class App extends React.Component {
   constructor() {
@@ -22,10 +22,37 @@ class App extends React.Component {
     this.deleteArticle = this.deleteArticle.bind(this);
     this.setEditIndex = this.setEditIndex.bind(this);
     this.closeEditForm = this.closeEditForm.bind(this);
+
+    this.axiosInstance = Object.assign({}, axiosInstance);
+
+    this.axiosInstance.interceptors.response.use(response => response, (error => {
+      if (error.response.status === HttpStatus.UNAUTHORIZED) {
+        this.axiosInstance.post('token', {}, {
+          headers: getTokenHeader('refreshToken')
+        }).then(response => {
+          if (response.status === HttpStatus.OK) {
+            let config = Object.assign({}, error.config);
+            Session.push('accessToken', response.data['accessToken']);
+            config.headers = getTokenHeader('accessToken');
+            this.axiosInstance.request(config)
+              .then(response => {
+                if (response.status === HttpStatus.OK) {
+                  this.setState({
+                    isAuthenticated: true,
+                    blog: response.data.data
+                  });
+                }
+              })
+              .catch(error => error);
+          }
+        }).catch(error => error);
+      }
+      return Promise.reject(error);
+    }));
   }
 
   componentDidMount() {
-    axiosInstance.post('login', {
+    this.axiosInstance.post('login', {
       email: 'sgr.raee@gmail.com',
       password: 'secret'
     }).then(response => {
@@ -35,7 +62,9 @@ class App extends React.Component {
       }
     }).catch(error => error);
 
-    axiosInstance.get('posts', getTokenHeader('accessToken')).then(response => {
+    this.axiosInstance.get('posts', {
+      headers: getTokenHeader('accessToken')
+    }).then(response => {
       if (response.status === HttpStatus.OK) {
         this.setState({
           isAuthenticated: true,
@@ -47,12 +76,14 @@ class App extends React.Component {
 
   addArticle(article) {
     let blog = this.state.blog.slice();
-    axiosInstance.post('posts', {
+    this.axiosInstance.post('posts', {
       title: article.title,
       body: article.body,
       tags: [],
       userId: 1
-    }, getTokenHeader('accessToken')).then(response => {
+    }, {
+      headers: getTokenHeader('accessToken')
+    }).then(response => {
       if (response.status === HttpStatus.CREATED) {
         blog.push(response.data.data);
         this.setState({ blog });
@@ -62,11 +93,13 @@ class App extends React.Component {
 
   editArticle(article) {
     let blog = this.state.blog.slice();
-    axiosInstance.put(`posts/${article.id}`, {
+    this.axiosInstance.put(`posts/${article.id}`, {
       title: article.title,
       body: article.body,
       tags: []
-    }, getTokenHeader('accessToken')).then(response => {
+    }, {
+      headers: getTokenHeader('accessToken')
+    }).then(response => {
       if (response.status === HttpStatus.OK) {
         blog[this.state.editIndex] = article;
         this.setState({
@@ -79,7 +112,9 @@ class App extends React.Component {
 
   deleteArticle(index) {
     let blog = this.state.blog.slice();
-    axiosInstance.delete(`posts/${blog[index].id}`, getTokenHeader('accessToken'))
+    this.axiosInstance.delete(`posts/${blog[index].id}`, {
+      headers: getTokenHeader('accessToken')
+    })
       .then(response => {
         if (response.status === HttpStatus.NO_CONTENT) {
           blog = blog.filter((value, i) => i !== index);
