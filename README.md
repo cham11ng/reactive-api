@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/cham11ng/reactive-api.svg?branch=master)](https://travis-ci.org/cham11ng/reactive-api)
 
-Application for building APIs with [reactjs.js](http://reactjs.com/)
+Application for connecting APIs of [lets-express](https://github.com/cham11ng/lets-express) with [reactjs.js](http://reactjs.com/)
 
 ---
 
