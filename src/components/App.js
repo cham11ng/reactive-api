@@ -27,23 +27,14 @@ class App extends React.Component {
 
     this.axiosInstance.interceptors.response.use(response => response, (error => {
       if (error.response.status === HttpStatus.UNAUTHORIZED) {
-        this.axiosInstance.post('token', {}, {
+        return this.axiosInstance.post('token', {}, {
           headers: getTokenHeader('refreshToken')
         }).then(response => {
           if (response.status === HttpStatus.OK) {
             let config = Object.assign({}, error.config);
             Session.push('accessToken', response.data['accessToken']);
             config.headers = getTokenHeader('accessToken');
-            this.axiosInstance.request(config)
-              .then(response => {
-                if (response.status === HttpStatus.OK) {
-                  this.setState({
-                    isAuthenticated: true,
-                    blog: response.data.data
-                  });
-                }
-              })
-              .catch(error => error);
+            return this.axiosInstance.request(config).then(response => response).catch(error => error);
           }
         }).catch(error => error);
       }
@@ -107,7 +98,7 @@ class App extends React.Component {
           editIndex: ''
         });
       }
-    }).catch(error => console.log(error));
+    }).catch(error => error);
   }
 
   deleteArticle(index) {
