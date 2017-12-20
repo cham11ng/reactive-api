@@ -5,7 +5,7 @@ import Session from '../utils/Session';
 import EditForm from './blogs/EditForm';
 import ArticleForm from './blogs/ArticleForm';
 import * as HttpStatus from 'http-status-codes';
-import { axiosInstance, getTokenHeader } from '../config';
+import axiosInstance, { getTokenHeader } from '../services/axiosService';
 
 class App extends React.Component {
   constructor() {
@@ -24,22 +24,6 @@ class App extends React.Component {
     this.closeEditForm = this.closeEditForm.bind(this);
 
     this.axiosInstance = Object.assign({}, axiosInstance);
-
-    this.axiosInstance.interceptors.response.use(response => response, (error => {
-      if (error.response.status === HttpStatus.UNAUTHORIZED) {
-        return this.axiosInstance.post('token', {}, {
-          headers: getTokenHeader('refreshToken')
-        }).then(response => {
-          if (response.status === HttpStatus.OK) {
-            let config = Object.assign({}, error.config);
-            Session.push('accessToken', response.data['accessToken']);
-            config.headers = getTokenHeader('accessToken');
-            return this.axiosInstance.request(config).then(response => response).catch(error => error);
-          }
-        }).catch(error => error);
-      }
-      return Promise.reject(error);
-    }));
   }
 
   componentDidMount() {
