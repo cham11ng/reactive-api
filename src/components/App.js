@@ -53,7 +53,7 @@ class App extends React.Component {
     event.preventDefault();
     articleService.add(this.state.form).then(response => {
       if (response) {
-        let blog = this.state.blog.slice();
+        let blog = [...this.state.blog];
         blog.push(response.data);
         this.setState({
           blog: blog,
@@ -72,7 +72,7 @@ class App extends React.Component {
     event.preventDefault();
     articleService.edit(this.state.form).then(response => {
       if (response) {
-        let blog = this.state.blog.slice();
+        let blog = [...this.state.blog];
         blog[this.state.editIndex] = response.data;
         this.setState({
           blog: blog,
@@ -90,7 +90,7 @@ class App extends React.Component {
   deleteArticle(index) {
     articleService.remove(this.state.blog[index].id).then(response => {
       if (response) {
-        let blog = this.state.blog.slice();
+        let blog = [...this.state.blog];
         blog.splice(index, 1);
         this.setState({ blog });
       }
@@ -120,7 +120,7 @@ class App extends React.Component {
   }
 
   handleChange(event) {
-    let article = Object.assign({}, this.state.form);
+    let article = { ...this.state.form };
     article[event.target.name] = event.target.value;
 
     return this.setState({

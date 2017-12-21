@@ -20,7 +20,7 @@ axiosInstance.interceptors.response.use(response => response, (error => {
       headers: getTokenHeader('refreshToken')
     }).then(response => {
       if (response.status === HttpStatus.OK) {
-        let config = Object.assign({}, error.config);
+        let config = { ...error.config };
         Session.push('accessToken', response.data['accessToken']);
         config.headers = getTokenHeader('accessToken');
         return axiosInstance.request(config).then(response => response).catch(error => error);
