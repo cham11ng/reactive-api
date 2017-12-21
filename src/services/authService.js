@@ -13,5 +13,5 @@ export function login() {
       return true;
     }
     return false;
-  }).catch(error => error)
+  }).catch(error => error);
 }

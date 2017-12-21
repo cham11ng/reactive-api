@@ -45,7 +45,7 @@ class App extends React.Component {
 
   fetchAllArticle() {
     articleService.fetchAll().then(response => {
-      this.setState({ blog: response.data });
+      this.setState({blog: response.data});
     }).then(error => error);
   }
 
@@ -92,7 +92,7 @@ class App extends React.Component {
       if (response) {
         let blog = [...this.state.blog];
         blog.splice(index, 1);
-        this.setState({ blog });
+        this.setState({blog});
       }
     }).catch(error => error);
   }
@@ -120,7 +120,7 @@ class App extends React.Component {
   }
 
   handleChange(event) {
-    let article = { ...this.state.form };
+    let article = {...this.state.form};
     article[event.target.name] = event.target.value;
 
     return this.setState({
