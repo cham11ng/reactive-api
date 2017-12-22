@@ -2,9 +2,9 @@ import React from 'react';
 
 import Blog from '../blogs/Blog';
 import Button from '../elements/Button';
+import Session from '../../utils/Session';
 import Message from '../elements/Message';
 import ArticleForm from '../blogs/ArticleForm';
-import * as authService from '../../services/authService';
 import * as articleService from '../../services/articleService';
 
 class Home extends React.Component {
@@ -19,8 +19,7 @@ class Home extends React.Component {
       },
       isAddModal: false,
       editIndex: null,
-      isEditing: false,
-      isAuthenticated: false
+      isEditing: false
     };
 
     this.addArticle = this.addArticle.bind(this);
@@ -34,12 +33,9 @@ class Home extends React.Component {
   }
 
   componentDidMount() {
-    authService.login().then(response => {
+    if (Session.has('isAuthenticated')) {
       this.fetchAllArticle();
-      this.setState({
-        isAuthenticated: true
-      });
-    }).catch(error => error);
+    }
   }
 
   fetchAllArticle() {
@@ -160,7 +156,7 @@ class Home extends React.Component {
 
     return (
       <section className="section">
-        {this.state.isAuthenticated ? blog : message}
+        {Session.has('isAuthenticated') ? blog : message}
       </section>
     );
   }

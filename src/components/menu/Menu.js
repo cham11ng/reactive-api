@@ -19,6 +19,20 @@ export default props => (
                 <i className="fa fa-lg fa-github"/>
               </span>
           </a>
+          <div className="navbar-item">
+            <div className="field is-grouped">
+              <div className="control">
+                <Link to="/login">
+                  <button className="button">Login</button>
+                </Link>
+              </div>
+              <div className="control">
+                <Link to="/register">
+                  <button className="button">Register</button>
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

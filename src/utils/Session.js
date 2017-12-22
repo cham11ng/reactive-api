@@ -1,6 +1,6 @@
 class Session {
-  static has() {
-    return !!sessionStorage.length;
+  static has(key = null) {
+    return key ? sessionStorage.hasOwnProperty(key) : !!sessionStorage.length;
   }
 
   static put(key, val) {
