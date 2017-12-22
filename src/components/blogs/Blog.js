@@ -1,7 +1,7 @@
 import React from 'react';
 import Article from './Article';
 
-export default function (props) {
+export default props => {
   const articles = props.value.map((article, index) => {
     return (
       <Article value={article}
