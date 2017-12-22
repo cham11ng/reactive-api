@@ -24,6 +24,10 @@ class Session {
   static fetch(key) {
     return this.has() ? sessionStorage[key] : null;
   }
+
+  static remove(key = null) {
+    return key ? sessionStorage.removeItem(key) : sessionStorage.clear();
+  }
 }
 
 export default Session;

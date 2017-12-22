@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import AuthButton from '../headers/AuthButton';
 
 export default props => (
   <nav className="navbar">
@@ -19,20 +20,7 @@ export default props => (
                 <i className="fa fa-lg fa-github"/>
               </span>
           </a>
-          <div className="navbar-item">
-            <div className="field is-grouped">
-              <div className="control">
-                <Link to="/login">
-                  <button className="button">Login</button>
-                </Link>
-              </div>
-              <div className="control">
-                <Link to="/register">
-                  <button className="button">Register</button>
-                </Link>
-              </div>
-            </div>
-          </div>
+          <AuthButton />
         </div>
       </div>
     </div>

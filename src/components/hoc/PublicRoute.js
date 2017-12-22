@@ -5,12 +5,12 @@ import Session from '../../utils/Session';
 export default ({component: Component, ...rest}) => (
   <Route {...rest} render={props => (
     Session.get('isAuthenticated') ? (
-      <Component {...props}/>
-    ) : (
       <Redirect to={{
-        pathname: '/login',
+        pathname: '/',
         state: {from: props.location}
       }}/>
+    ) : (
+      <Component {...props}/>
     )
   )}/>
 )

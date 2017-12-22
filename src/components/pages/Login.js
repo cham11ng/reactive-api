@@ -1,4 +1,6 @@
 import React from 'react';
+import Session from '../../utils/Session';
+import { Redirect } from 'react-router-dom';
 import * as authService from '../../services/authService';
 
 class Login extends React.Component {
@@ -25,8 +27,7 @@ class Login extends React.Component {
 
   handleSubmit(event) {
     event.preventDefault();
-    authService.login(this.state.form).then(response => {
-      this.fetchAllArticle();
+    authService.login(this.state.form).then(() => {
       this.setState({
         form: {
           email: '',
@@ -37,6 +38,10 @@ class Login extends React.Component {
   }
 
   render() {
+    if (Session.get('isAuthenticated')) {
+      return <Redirect to="/"/>;
+    }
+
     return (
       <div className="section">
         <div className="container">

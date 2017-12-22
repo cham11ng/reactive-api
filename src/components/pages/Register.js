@@ -1,4 +1,6 @@
 import React from 'react';
+import Session from '../../utils/Session';
+import { Redirect } from 'react-router-dom';
 import * as authService from '../../services/authService';
 
 class Register extends React.Component {
@@ -38,6 +40,10 @@ class Register extends React.Component {
   }
 
   render() {
+    if (Session.get('isAuthenticated')) {
+      return <Redirect to="/"/>;
+    }
+
     return (
       <div className="section">
         <div className="container">
